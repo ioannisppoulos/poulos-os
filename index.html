@@ -1,325 +1,52 @@
 <!doctype html>
 <html lang="el">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light">
-<title>ΠΟΥΛΟΣ OS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --paper:#F3F5F2; --ink:#182029; --muted:#5D6B77; --line:#D5DBD7; --field:#FFFFFF;
-    --action:#1F5F66; --danger:#9B3B2E; --ok:#2F6B3A; --warn:#8A5A16; --band:#1F5F66;
-    --kind-personal:#5C4B8A; --kind-business:#1F5F66; --kind-project:#8A5A16;
-    --radius:10px; --pad:16px; --font:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
-  }
-  *{box-sizing:border-box} html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 var(--font)}
-  body{min-height:100dvh;display:flex;flex-direction:column}
-  button,input,select,textarea{font:inherit;color:inherit}
-  input,select,textarea{font-size:16px;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
-  textarea{min-height:84px;resize:vertical}
-  button{border:1px solid var(--line);background:var(--field);border-radius:8px;padding:9px 14px;cursor:pointer}
-  button.primary{background:var(--action);border-color:var(--action);color:#fff}
-  button.quiet{border-color:transparent;background:transparent;color:var(--action);padding:6px 8px}
-  button.danger{color:var(--danger)} button:disabled{opacity:.5;cursor:default}
-  :focus-visible{outline:3px solid #9CC7CB;outline-offset:2px} a{color:var(--action)}
-  h1,h2,h3{margin:0;font-weight:700} h2{font-size:22px;margin:24px 0 8px} h3{font-size:17px;margin:18px 0 6px}
-  p{margin:6px 0} .muted{color:var(--muted)} .small{font-size:14px}
-  header.band{background:var(--band);color:#fff;padding:calc(env(safe-area-inset-top) + 12px) var(--pad) 12px}
-  header.band .wrap{max-width:760px;margin:0 auto;display:flex;align-items:flex-start;gap:12px}
-  header.band h1{font-size:22px;line-height:1.2} header.band .scope{opacity:.85;font-size:14px;margin-top:2px}
-  header.band button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);color:#fff;white-space:nowrap}
-  header.band .right{margin-left:auto;display:flex;gap:6px}
-  nav.tabs{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;overflow-x:auto}
-  nav.tabs .wrap{max-width:760px;margin:0 auto;display:flex}
-  nav.tabs button{flex:1;border:0;border-radius:0;background:transparent;padding:12px 6px;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
-  nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--band);font-weight:700}
-  main{flex:1;width:100%;max-width:760px;margin:0 auto;padding:8px var(--pad) calc(env(safe-area-inset-bottom) + 40px)}
-  .group{background:var(--field);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line)}
-  .row:first-child{border-top:0} .row .grow{flex:1;min-width:0} .row.tap{cursor:pointer}
-  .row .title{display:block} .row .title.done{text-decoration:line-through;color:var(--muted)}
-  .row .meta{font-size:13px;color:var(--muted);margin-top:2px}
-  .row input[type="checkbox"]{width:22px;height:22px;margin-top:1px;accent-color:var(--action)}
-  .chip{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-right:6px;vertical-align:middle}
-  .chip.approved{border-color:var(--ok);color:var(--ok)} .chip.candidate{border-color:var(--warn);color:var(--warn)}
-  .chip.withheld,.chip.expired{border-color:var(--danger);color:var(--danger)} .chip.summary{border-color:var(--kind-personal);color:var(--kind-personal)}
-  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0} .chips button{border-radius:999px;padding:5px 12px;font-size:14px}
-  .chips button[aria-pressed="true"]{background:var(--band);border-color:var(--band);color:#fff}
-  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .composer{display:flex;gap:8px;margin:12px 0} .composer input{flex:1}
-  form.stack{display:grid;gap:10px;margin:8px 0 16px} form.stack .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .empty{padding:20px 14px;color:var(--muted)}
-  .notice{background:#E7EEEC;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:14px} .notice.error{background:#F4E3DF;color:var(--danger)}
-  .cards{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0} @media(min-width:640px){.cards{grid-template-columns:1fr 1fr}}
-  .card{background:var(--field);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:var(--radius);padding:12px 14px;cursor:pointer}
-  .card.personal{border-left-color:var(--kind-personal)} .card.business{border-left-color:var(--kind-business)} .card.project{border-left-color:var(--kind-project)}
-  .card .nums{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:14px;color:var(--muted)} .card .nums b{color:var(--ink)}
-  .card .warn{color:var(--warn)}
-  dialog{border:0;border-radius:14px;padding:20px;width:min(520px,92vw)} dialog::backdrop{background:rgba(24,32,41,.45)}
-  .signin{max-width:420px;margin:12vh auto;padding:0 var(--pad)} .signin h1{font-size:28px;margin-bottom:4px}
-  pre.body{white-space:pre-wrap;font:inherit;margin:6px 0 0;color:var(--ink)}
-  @media (prefers-reduced-motion:no-preference){dialog[open]{animation:pop .14s ease-out}} @keyframes pop{from{transform:translateY(6px);opacity:0}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#F3F5FA">
+  <meta name="description" content="Ο προσωπικός σου χώρος εργασίας. Προτεραιότητες, εφαρμογές και συνεργασία με τους agents σου.">
+  <title>ΠΟΥΛΟΣ — Workstation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700;750;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<div id="app"></div>
-<script>window.__CONFIG__={"url": "https://hmnlolrmsfbcwhqpfsgy.supabase.co", "anonKey": "sb_publishable_u1KoW7EEdENWmQs9QX0zig_Dm2_mPM9"}</script>
-<script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const CFG = window.__CONFIG__ || {};
-const $app = document.getElementById("app");
-if (!CFG.url || !CFG.anonKey) { $app.innerHTML = `<div class="signin"><h1>Δεν έχει ρυθμιστεί</h1><p class="muted">Λείπει το Supabase URL/anon key.</p></div>`; throw new Error("missing config"); }
-const sb = createClient(CFG.url, CFG.anonKey);
-
-// ---------------------------------------------------------------- state
-const S = { session:null, view:"home", overview:[], ws:null, role:null, tab:"tasks", tasks:[], memory:[], skills:[], feed:[], feedProvider:"all", feedOnlyNew:true,
-  logs:[], summaries:[], members:[], areas:[], jobs:[], today:[], notice:null, channel:null };
-const KIND = { personal:"Personal OS", business:"Επιχείρηση", project:"Project" };
-const PROVIDERS = { calendar:"Calendar", slack:"Slack", notion:"Notion", gmail:"Gmail", health:"Υγεία", drive:"Drive", bank:"Τράπεζα", other:"Άλλο" };
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const remember = (k,v) => { try { localStorage.setItem("os."+k, v); } catch {} };
-const recall = (k) => { try { return localStorage.getItem("os."+k); } catch { return null; } };
-const fmtDT = (s) => s ? new Date(s).toLocaleString("el-GR", { dateStyle:"short", timeStyle:"short" }) : "";
-const fmtT = (s) => s ? new Date(s).toLocaleTimeString("el-GR", { timeStyle:"short" }) : "";
-function notify(text, kind="info") { S.notice = { text, kind }; render(); setTimeout(() => { if (S.notice?.text === text) { S.notice = null; render(); } }, 5000); }
-function fail(e) { notify(e?.message || String(e), "error"); }
-const canEdit = () => ["owner","editor"].includes(S.role);
-const isOwner = () => S.role === "owner";
-
-// ---------------------------------------------------------------- auth
-async function signIn(email, password) {
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) return fail(error);
-}
-async function changePassword(pw) {
-  const { error } = await sb.auth.updateUser({ password: pw });
-  if (error) return fail(error); notify("Ο κωδικός άλλαξε.");
-}
-
-// ---------------------------------------------------------------- data: home
-async function loadHome() {
-  const { data, error } = await sb.from("workspace_overview").select("*").order("kind").order("name");
-  if (error) return fail(error);
-  S.overview = data;
-  const start = new Date(); start.setHours(0,0,0,0); const end = new Date(start); end.setDate(end.getDate()+1);
-  const { data: today } = await sb.from("tool_feed").select("*").eq("provider","calendar").gte("occurred_at", start.toISOString()).lt("occurred_at", end.toISOString()).order("occurred_at").limit(30);
-  S.today = today || [];
-  const wanted = recall("ws");
-  if (wanted && data.find((w) => w.id === wanted) && recall("view") === "ws") return openWorkspace(data.find((w) => w.id === wanted));
-  S.view = "home"; render();
-}
-
-// ---------------------------------------------------------------- data: workspace
-async function openWorkspace(ws) {
-  S.view = "ws"; S.ws = ws; S.tasks = []; S.memory = []; S.skills = []; S.feed = []; S.logs = []; S.summaries = []; S.members = []; S.areas = []; S.jobs = [];
-  if (S.channel) { sb.removeChannel(S.channel); S.channel = null; }
-  remember("ws", ws.id); remember("view", "ws");
-  document.documentElement.style.setProperty("--band", `var(--kind-${ws.kind})`);
-  const { data: role } = await sb.rpc("member_role", { ws: ws.id }); S.role = role;
-  const sub = (table, fn) => ({ event:"*", schema:"public", table, filter:`workspace_id=eq.${ws.id}` });
-  S.channel = sb.channel("ws-"+ws.id)
-    .on("postgres_changes", sub("tasks"), loadTasks).on("postgres_changes", sub("memory_entries"), loadMemory)
-    .on("postgres_changes", sub("ingestion_events"), loadFeed).on("postgres_changes", sub("log_events"), loadLogs)
-    .on("postgres_changes", sub("skills"), loadSkills).subscribe();
-  await Promise.all([loadTasks(), loadMemory(), loadSkills(), loadFeed(), loadAreas()]);
-  render();
-}
-function goHome() { S.view = "home"; remember("view", "home"); if (S.channel) { sb.removeChannel(S.channel); S.channel = null; } document.documentElement.style.setProperty("--band", "var(--kind-business)"); loadHome(); }
-function q(table, sel="*") { return sb.from(table).select(sel).eq("workspace_id", S.ws.id); }
-async function loadTasks() { const { data, error } = await q("tasks").order("status").order("priority",{ascending:false}).order("updated_at",{ascending:false}).limit(300); if (error) return fail(error); S.tasks = data; render(); }
-async function loadMemory() { const { data, error } = await q("memory_effective").order("updated_at",{ascending:false}).limit(300); if (error) return fail(error); S.memory = data; render(); }
-async function loadSkills() { const { data, error } = await q("skills").order("status").order("updated_at",{ascending:false}); if (error) return fail(error); S.skills = data; render(); }
-async function loadFeed() { const { data, error } = await q("tool_feed").order("occurred_at",{ascending:false}).limit(400); if (error) return fail(error); S.feed = data; render(); }
-async function loadAreas() { const { data } = await q("areas").order("sort"); S.areas = data || []; }
-async function loadLogs() {
-  const since = new Date(); since.setDate(since.getDate()-14);
-  const [{ data: logs }, { data: sums }] = await Promise.all([
-    q("log_events").gte("at", since.toISOString()).order("at",{ascending:false}).limit(300),
-    q("daily_summaries").order("day",{ascending:false}).limit(30)]);
-  S.logs = logs || []; S.summaries = sums || []; render();
-}
-async function loadMore() {
-  const [{ data: m }, { data: j }] = await Promise.all([q("workspace_members","user_id,role,added_at"), q("job_runs").order("started_at",{ascending:false}).limit(15)]);
-  S.members = m || []; S.jobs = j || []; render();
-}
-
-// tasks
-async function addTask(title, area) { const { error } = await sb.from("tasks").insert({ workspace_id:S.ws.id, title, area: area || null, via:"app" }); if (error) fail(error); }
-async function patchTask(t, patch) { const { error } = await sb.rpc("update_task", { p_id:t.id, p_expected_version:t.version, p_patch:patch }); if (error) { fail(error); loadTasks(); } }
-async function deleteTask(t) { if (!confirm(`Διαγραφή «${t.title}»;`)) return; const { error } = await sb.from("tasks").delete().eq("id", t.id); if (error) fail(error); }
-// memory / skills
-async function addMemory(entry) { const { error } = await sb.from("memory_entries").insert({ workspace_id:S.ws.id, via:"app", ...entry }); if (error) return fail(error); notify(isOwner() ? "Αποθηκεύτηκε." : "Αποθηκεύτηκε ως candidate."); }
-async function setStatus(table, id, status) { const { error } = await sb.from(table).update({ status }).eq("id", id); if (error) fail(error); }
-function publishTarget() { if (S.ws.kind === "project") return S.overview.find((w) => w.id === S.ws.parent_id); if (S.ws.kind === "business") return S.overview.find((w) => w.kind === "personal"); return null; }
-async function publish(id) { const t = publishTarget(); if (!t) return notify("Από εδώ δεν δημοσιεύεται τίποτα."); const { error } = await sb.rpc("publish_summary", { p_entry:id, p_target:t.id }); if (error) return fail(error); notify(`Δημοσιεύτηκε στο ${t.name}.`); }
-// feed
-async function triage(id, status) { const { error } = await sb.from("ingestion_events").update({ status }).eq("id", id); if (error) fail(error); }
-// members / export
-async function addMember(email, role) { const { error } = await sb.rpc("add_member_by_email", { p_ws:S.ws.id, p_email:email, p_role:role }); if (error) return fail(error); notify("Το μέλος προστέθηκε."); loadMore(); }
-async function removeMember(uid) { if (!confirm("Αφαίρεση μέλους;")) return; const { error } = await sb.rpc("remove_member", { p_ws:S.ws.id, p_user:uid }); if (error) return fail(error); loadMore(); }
-async function exportWs() {
-  const { data, error } = await sb.rpc("export_workspace", { p_ws:S.ws.id }); if (error) return fail(error);
-  const a = Object.assign(document.createElement("a"), { href:URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"})), download:`${S.ws.slug}-${new Date().toISOString().slice(0,10)}.json` });
-  a.click(); URL.revokeObjectURL(a.href);
-}
-async function restoreWs(file) {
-  try { const p = JSON.parse(await file.text());
-    if (!confirm(`Επαναφορά ${p.tasks?.length ?? 0} εργασιών και ${p.memory?.length ?? 0} εγγραφών μνήμης στο «${S.ws.name}»;`)) return;
-    const { data, error } = await sb.rpc("import_workspace", { p_ws:S.ws.id, p_payload:p }); if (error) return fail(error);
-    await sb.rpc("import_workspace_extras", { p_ws:S.ws.id, p_payload:p });
-    notify(`Επαναφορά: ${data.tasks} εργασίες, ${data.memory} μνήμη.`); loadTasks(); loadMemory(); loadLogs(); loadSkills();
-  } catch (e) { fail(e); }
-}
-
-// ---------------------------------------------------------------- render
-function render() {
-  if (!S.session) return renderSignIn();
-  if (S.view === "home") return renderHome();
-  const w = S.ws;
-  $app.innerHTML = `
-    <header class="band"><div class="wrap">
-      <div><h1>${esc(w.name)}</h1><div class="scope">${KIND[w.kind]} · ρόλος: ${esc(S.role||"μέλος")}. ${w.kind==="personal" ? "Μόνο εσύ — τίποτα δεν περνά στα Projects." : "Οι agents βλέπουν μόνο αυτόν τον χώρο."}</div></div>
-      <div class="right"><button data-act="home">Αρχική</button></div>
-    </div></header>
-    <nav class="tabs" role="tablist"><div class="wrap">${[["tasks","Εργασίες"],["memory","Μνήμη"],["tools","Εργαλεία"],["log","Ημερολόγιο"],["more","Περισσότερα"]].map(([t,l]) => `<button role="tab" aria-selected="${S.tab===t}" data-tab="${t}">${l}</button>`).join("")}</div></nav>
-    <main>${notice()}${{tasks:renderTasks, memory:renderMemory, tools:renderTools, log:renderLog, more:renderMore}[S.tab]()}</main>
-    <dialog id="task-editor"></dialog>`;
-  wire();
-}
-function notice() { return S.notice ? `<div class="notice ${S.notice.kind==="error"?"error":""}">${esc(S.notice.text)}</div>` : ""; }
-
-function renderSignIn() {
-  $app.innerHTML = `<div class="signin"><h1>ΠΟΥΛΟΣ OS</h1><p class="muted">Ιδιωτικό. Σύνδεση με email και κωδικό.</p>${notice()}
-    <form class="stack" id="signin"><input type="email" name="email" placeholder="email" autocomplete="username" required><input type="password" name="password" placeholder="κωδικός" autocomplete="current-password" required><button class="primary">Σύνδεση</button></form></div>`;
-  document.getElementById("signin").onsubmit = (e) => { e.preventDefault(); signIn(e.target.email.value.trim(), e.target.password.value); };
-}
-
-function renderHome() {
-  document.documentElement.style.setProperty("--band", "var(--kind-business)");
-  const card = (w) => `<div class="card ${w.kind} tap" data-ws="${w.id}"><strong>${esc(w.name)}</strong><div class="small muted">${KIND[w.kind]}</div>
-    <div class="nums"><span><b>${w.open_tasks}</b> ανοιχτές</span><span class="${w.pending_memory+w.pending_skills ? "warn":""}"><b>${w.pending_memory+w.pending_skills}</b> προς έγκριση</span><span class="${w.new_items?"warn":""}"><b>${w.new_items}</b> νέα από εργαλεία</span>${w.last_summary?`<span>summary ${w.last_summary}</span>`:""}</div></div>`;
-  const personal = S.overview.filter((w) => w.kind==="personal"), biz = S.overview.filter((w) => w.kind==="business"), proj = S.overview.filter((w) => w.kind==="project");
-  const pend = S.overview.reduce((a,w) => a + w.pending_memory + w.pending_skills, 0), fresh = S.overview.reduce((a,w) => a + w.new_items, 0);
-  $app.innerHTML = `
-    <header class="band"><div class="wrap"><div><h1>ΠΟΥΛΟΣ</h1><div class="scope">${S.overview.length} χώροι · ${pend} προς έγκριση · ${fresh} νέα από εργαλεία</div></div><div class="right"><button data-act="signout">Έξοδος</button></div></div></header>
-    <main>${notice()}
-      ${S.overview.length ? "" : `<div class="group"><div class="empty">Δεν έχεις χώρους ακόμη. Ο ιδιοκτήτης τρέχει το bootstrap στη βάση.</div></div>`}
-      ${personal.length ? `<h3>Προσωπικά</h3><div class="cards">${personal.map(card).join("")}</div>` : ""}
-      ${biz.length ? `<h3>Επιχείρηση</h3><div class="cards">${biz.map(card).join("")}${proj.map(card).join("")}</div>` : ""}
-      <h3>Σήμερα <span class="muted">${S.today.length}</span></h3>
-      <div class="group">${S.today.map((i) => `<div class="row"><div class="grow"><span class="title">${esc(i.title||i.summary)}</span><div class="meta">${fmtT(i.occurred_at)} · ${esc(i.workspace_name)}${i.url?` · <a href="${esc(i.url)}" target="_blank" rel="noopener">άνοιγμα</a>`:""}</div></div></div>`).join("") || `<div class="empty">Τίποτα από το ημερολόγιο για σήμερα — γεμίζει από το scheduled task ingest-calendar.</div>`}</div>
-    </main>`;
-  $app.querySelectorAll("[data-ws]").forEach((c) => c.onclick = () => openWorkspace(S.overview.find((w) => w.id === c.dataset.ws)));
-  $app.querySelector('[data-act="signout"]').onclick = () => sb.auth.signOut();
-}
-
-function renderTasks() {
-  const areaSel = S.ws.kind==="personal" && S.areas.length ? `<select name="area" aria-label="Περιοχή" style="width:auto"><option value="">περιοχή</option>${S.areas.map((a)=>`<option value="${esc(a.slug)}">${esc(a.name)}</option>`).join("")}</select>` : "";
-  const groups = [["doing","Σε εξέλιξη"],["todo","Προς εκτέλεση"],["done","Έγιναν"],["dropped","Ακυρώθηκαν"]];
-  const rows = (list) => list.map((t) => `<div class="row"><input type="checkbox" ${t.status==="done"?"checked":""} ${canEdit()?"":"disabled"} data-toggle="${t.id}" aria-label="Έγινε">
-    <div class="grow"><a href="#" class="title ${t.status==="done"?"done":""}" data-edit="${t.id}">${esc(t.title)}</a><div class="meta">${t.area?esc(t.area)+" · ":""}${t.due_date?"έως "+t.due_date+" · ":""}${["","χαμηλή","μεσαία","υψηλή"][t.priority]?"προτ. "+["","χαμηλή","μεσαία","υψηλή"][t.priority]+" · ":""}${t.via?esc(t.via)+" · ":""}${t.notes?esc(t.notes.slice(0,80)):""}</div></div></div>`).join("");
-  return `${canEdit() ? `<form class="composer" id="add-task"><input name="title" placeholder="Νέα εργασία" required autocomplete="off">${areaSel}<button class="primary">Προσθήκη</button></form>` : `<p class="muted small">Μόνο ανάγνωση σε αυτόν τον χώρο.</p>`}
-    ${groups.map(([st,label]) => { const l = S.tasks.filter((t)=>t.status===st); return l.length ? `<h3>${label} <span class="muted">${l.length}</span></h3><div class="group">${rows(l)}</div>` : ""; }).join("") || `<div class="group"><div class="empty">Καμία εργασία ακόμη.</div></div>`}`;
-}
-
-function renderMemory() {
-  const target = publishTarget();
-  const cur = S.memory.filter((m)=>m.effective_status==="approved"), wait = S.memory.filter((m)=>m.effective_status==="candidate"), rest = S.memory.filter((m)=>["withheld","expired"].includes(m.effective_status));
-  const row = (m) => `<div class="row"><div class="grow"><div><span class="chip ${m.kind}">${m.kind}</span><span class="chip ${m.effective_status}">${m.effective_status}</span><strong>${esc(m.title)}</strong></div><pre class="body">${esc(m.body)}</pre>
-    <div class="meta">${m.area?esc(m.area)+" · ":""}${m.valid_until?"ισχύει έως "+m.valid_until+" · ":""}${m.source_ref?"πηγή: "+esc(m.source_ref)+" · ":""}${m.origin_workspace_id?"δημοσιευμένο από άλλον χώρο · ":""}${m.via?esc(m.via)+" · ":""}${m.updated_at.slice(0,10)}</div>
-    <div class="actions">${isOwner()&&m.effective_status!=="approved"&&m.effective_status!=="expired"?`<button class="quiet" data-approve="${m.id}">Έγκριση</button>`:""}${isOwner()&&m.effective_status==="approved"?`<button class="quiet" data-withhold="${m.id}">Απόσυρση</button>`:""}${canEdit()&&target&&m.effective_status==="approved"&&["decision","context","summary"].includes(m.kind)?`<button class="quiet" data-publish="${m.id}">Δημοσίευση στο ${esc(target.name)}</button>`:""}${isOwner()?`<button class="quiet danger" data-delmem="${m.id}">Διαγραφή</button>`:""}</div></div></div>`;
-  const skillRow = (s) => `<div class="row"><div class="grow"><div><span class="chip">${s.kind}</span><span class="chip ${s.status}">${s.status}</span><strong>${esc(s.name)}</strong> <span class="muted small">${esc(s.slug)}</span></div><div class="meta">${esc(s.description)} · ${esc(s.file_ref)} · χρήσεις ${s.use_count}${s.via?" · "+esc(s.via):""}</div>
-    <div class="actions">${isOwner()&&s.status!=="approved"?`<button class="quiet" data-skill-approve="${s.id}">Έγκριση</button>`:""}${isOwner()&&s.status==="approved"?`<button class="quiet" data-skill-withhold="${s.id}">Απόσυρση</button>`:""}</div></div></div>`;
-  const areaSel = S.ws.kind==="personal" && S.areas.length ? `<select name="area"><option value="">περιοχή (προαιρετικό)</option>${S.areas.map((a)=>`<option value="${esc(a.slug)}">${esc(a.name)}</option>`).join("")}</select>` : `<input type="hidden" name="area" value="">`;
-  return `<p class="muted small">Μόνο τα εγκεκριμένα, μη ληγμένα είναι τρέχουσα αλήθεια και μπαίνουν στο context.md. Ό,τι γράφουν οι agents περιμένει έγκριση.</p>
-    ${canEdit()?`<details><summary>Νέα εγγραφή</summary><form class="stack" id="add-memory"><div class="two"><select name="kind"><option value="context">Context</option><option value="decision">Απόφαση</option><option value="source">Δείκτης πηγής</option></select><input name="valid_until" type="date" aria-label="Ισχύει έως"></div>${areaSel}<input name="title" placeholder="Τίτλος" required><textarea name="body" placeholder="Σύντομο, τρέχον, χρήσιμο." required></textarea><input name="source_ref" placeholder="Δείκτης πηγής (διαδρομή ή URL), προαιρετικό"><button class="primary">Αποθήκευση</button></form></details>`:""}
-    ${wait.length?`<h3>Προς έγκριση <span class="muted">${wait.length}</span></h3><div class="group">${wait.map(row).join("")}</div>`:""}
-    <h3>Τρέχουσα αλήθεια <span class="muted">${cur.length}</span></h3><div class="group">${cur.map(row).join("")||`<div class="empty">Τίποτα εγκεκριμένο ακόμη.</div>`}</div>
-    ${S.skills.length?`<h3>Skills <span class="muted">${S.skills.length}</span></h3><div class="group">${S.skills.map(skillRow).join("")}</div>`:""}
-    ${rest.length?`<details><summary class="muted">Αποσυρμένα ή ληγμένα (${rest.length})</summary><div class="group">${rest.map(row).join("")}</div></details>`:""}`;
-}
-
-function renderTools() {
-  const counts = {}; S.feed.forEach((i) => { counts[i.provider] = (counts[i.provider]||0)+1; });
-  const list = S.feed.filter((i) => (S.feedProvider==="all" || i.provider===S.feedProvider) && (!S.feedOnlyNew || i.status==="new"));
-  const row = (i) => `<div class="row"><div class="grow"><div><span class="chip">${PROVIDERS[i.provider]||i.provider}</span><span class="chip">${i.category}</span>${i.status!=="new"?`<span class="chip">${i.status}</span>`:""}<strong>${esc(i.title||i.summary)}</strong></div>${i.title?`<div>${esc(i.summary)}</div>`:""}
-    <div class="meta">${fmtDT(i.occurred_at)}${i.amount!=null?` · ${i.amount} ${i.currency||""}`:""}${i.counterparty?" · "+esc(i.counterparty):""}${i.area?" · "+esc(i.area):""}${i.via?" · "+esc(i.via):""}${i.url?` · <a href="${esc(i.url)}" target="_blank" rel="noopener">άνοιγμα στο ${PROVIDERS[i.provider]||i.provider}</a>`:""}</div>
-    ${canEdit()&&i.status==="new"?`<div class="actions"><button class="quiet" data-triage="${i.id}" data-status="triaged">Το είδα</button><button class="quiet" data-triage="${i.id}" data-status="archived">Αρχείο</button></div>`:""}</div></div>`;
-  return `<div class="chips"><button aria-pressed="${S.feedProvider==="all"}" data-prov="all">Όλα ${S.feed.length}</button>${Object.keys(PROVIDERS).filter((p)=>counts[p]).map((p)=>`<button aria-pressed="${S.feedProvider===p}" data-prov="${p}">${PROVIDERS[p]} ${counts[p]}</button>`).join("")}<button aria-pressed="${S.feedOnlyNew}" data-onlynew>μόνο νέα</button></div>
-    <div class="group">${list.map(row).join("")||`<div class="empty">Τίποτα ακόμη. Γεμίζει από τα scheduled tasks (Calendar, Slack, Notion, Gmail) ή όταν πεις σε έναν agent «sync now».</div>`}</div>`;
-}
-
-function renderLog() {
-  if (!S._logLoaded) { S._logLoaded = true; loadLogs(); }
-  const byDay = {}; S.logs.forEach((l) => { (byDay[l.day] ||= []).push(l); });
-  const days = Object.keys(byDay).sort().reverse();
-  return `${canEdit()?`<form class="composer" id="add-log"><input name="text" placeholder="Τι έγινε τώρα;" required autocomplete="off"><button class="primary">Καταγραφή</button></form>`:""}
-    ${S.summaries.length?`<h3>Ημερήσια summaries</h3><div class="group">${S.summaries.map((s)=>`<details class="row" style="display:block"><summary><strong>${s.day}</strong> <span class="muted small">${s.via||s.model||""}</span></summary><pre class="body">${esc(s.body)}</pre></details>`).join("")}</div>`:""}
-    ${days.map((d)=>`<h3>${d} <span class="muted">${byDay[d].length}</span></h3><div class="group">${byDay[d].map((l)=>`<div class="row"><div class="grow"><span class="title">${esc(l.text)}</span><div class="meta">${fmtT(l.at)} · ${l.actor}${l.via?" · "+esc(l.via):""}${l.area?" · "+esc(l.area):""} · ${l.kind}</div></div></div>`).join("")}</div>`).join("")||`<div class="group"><div class="empty">Κενό log τις τελευταίες 14 ημέρες.</div></div>`}`;
-}
-
-function renderMore() {
-  if (!S._moreLoaded) { S._moreLoaded = true; loadMore(); }
-  return `<h2>${esc(S.ws.name)}</h2><div class="group"><div class="row"><div class="grow">${KIND[S.ws.kind]} · ${esc(S.ws.slug)}<div class="meta">συνδεδεμένος ως ${esc(S.session.user.email)}</div></div></div></div>
-    ${S.areas.length?`<h3>Περιοχές</h3><div class="group">${S.areas.map((a)=>`<div class="row"><div class="grow">${esc(a.name)}<div class="meta">${esc(a.description||"")}</div></div></div>`).join("")}</div>`:""}
-    <h3>Jobs</h3><div class="group">${S.jobs.map((j)=>`<div class="row"><div class="grow">${esc(j.job)} <span class="chip ${j.status==="ok"?"approved":j.status==="error"?"withheld":"candidate"}">${j.status}</span><div class="meta">${fmtDT(j.started_at)}${j.via?" · "+esc(j.via):""}</div></div></div>`).join("")||`<div class="empty">Κανένα τρέξιμο ακόμη — γεμίζει όταν ενεργοποιηθούν τα scheduled tasks.</div>`}</div>
-    <h3>Backup</h3><div class="actions"><button data-act="export">Εξαγωγή (JSON)</button>${isOwner()?`<label><input type="file" id="restore" accept="application/json" hidden><button type="button" data-act="restore">Επαναφορά από εξαγωγή</button></label>`:""}</div>
-    ${S.ws.kind!=="personal"?`<h3>Μέλη</h3><div class="group">${S.members.map((m)=>`<div class="row"><div class="grow">${m.user_id===S.session.user.id?"εσύ":esc(m.user_id.slice(0,8))+"…"}<div class="meta">${m.role} · από ${m.added_at.slice(0,10)}</div></div>${isOwner()&&m.user_id!==S.session.user.id?`<button class="quiet danger" data-rm="${m.user_id}">Αφαίρεση</button>`:""}</div>`).join("")||`<div class="empty">…</div>`}</div>
-    ${isOwner()?`<form class="stack" id="add-member"><div class="two"><input name="email" type="email" placeholder="email μέλους (πρέπει να έχει λογαριασμό)" required><select name="role"><option value="viewer">Ανάγνωση</option><option value="editor">Επεξεργασία</option></select></div><button>Προσθήκη μέλους</button></form>`:""}`:""}
-    <h3>Κωδικός</h3><form class="stack" id="pw"><input name="pw" type="password" placeholder="νέος κωδικός (τουλάχιστον 10 χαρακτήρες)" minlength="10" autocomplete="new-password" required><button>Αλλαγή κωδικού</button></form>
-    <div class="actions" style="margin-top:24px"><button data-act="signout">Έξοδος</button></div>`;
-}
-
-// ---------------------------------------------------------------- wiring
-function wire() {
-  const $ = (s) => $app.querySelector(s), all = (s) => [...$app.querySelectorAll(s)];
-  all("[data-tab]").forEach((b) => b.onclick = () => { S.tab = b.dataset.tab; render(); });
-  $('[data-act="home"]').onclick = goHome;
-  const f1 = $("#add-task"); if (f1) f1.onsubmit = (e) => { e.preventDefault(); const v = e.target.title.value.trim(); if (v) { addTask(v, e.target.area?.value); e.target.reset(); } };
-  all("[data-toggle]").forEach((c) => c.onchange = () => { const t = S.tasks.find((x)=>x.id===c.dataset.toggle); patchTask(t, { status: c.checked ? "done" : "todo" }); });
-  all("[data-edit]").forEach((a) => a.onclick = (e) => { e.preventDefault(); openTaskEditor(S.tasks.find((x)=>x.id===a.dataset.edit)); });
-  const f2 = $("#add-memory"); if (f2) f2.onsubmit = (e) => { e.preventDefault(); const f = e.target; addMemory({ kind:f.kind.value, title:f.title.value.trim(), body:f.body.value.trim(), valid_until:f.valid_until.value||null, source_ref:f.source_ref.value.trim()||null, area:f.area.value||null }); f.reset(); };
-  all("[data-approve]").forEach((b) => b.onclick = () => setStatus("memory_entries", b.dataset.approve, "approved"));
-  all("[data-withhold]").forEach((b) => b.onclick = () => setStatus("memory_entries", b.dataset.withhold, "withheld"));
-  all("[data-skill-approve]").forEach((b) => b.onclick = () => setStatus("skills", b.dataset.skillApprove, "approved"));
-  all("[data-skill-withhold]").forEach((b) => b.onclick = () => setStatus("skills", b.dataset.skillWithhold, "withheld"));
-  all("[data-publish]").forEach((b) => b.onclick = () => publish(b.dataset.publish));
-  all("[data-delmem]").forEach((b) => b.onclick = async () => { if (!confirm("Διαγραφή εγγραφής;")) return; const { error } = await sb.from("memory_entries").delete().eq("id", b.dataset.delmem); if (error) fail(error); });
-  all("[data-prov]").forEach((b) => b.onclick = () => { S.feedProvider = b.dataset.prov; render(); });
-  const on = $("[data-onlynew]"); if (on) on.onclick = () => { S.feedOnlyNew = !S.feedOnlyNew; render(); };
-  all("[data-triage]").forEach((b) => b.onclick = () => triage(b.dataset.triage, b.dataset.status));
-  const f3 = $("#add-log"); if (f3) f3.onsubmit = async (e) => { e.preventDefault(); const v = e.target.text.value.trim(); if (!v) return; const { error } = await sb.from("log_events").insert({ workspace_id:S.ws.id, text:v, via:"app" }); if (error) fail(error); e.target.reset(); };
-  const ex = $('[data-act="export"]'); if (ex) ex.onclick = exportWs;
-  const rs = $('[data-act="restore"]'); if (rs) { rs.onclick = () => $("#restore").click(); $("#restore").onchange = (e) => { if (e.target.files[0]) restoreWs(e.target.files[0]); }; }
-  const am = $("#add-member"); if (am) am.onsubmit = (e) => { e.preventDefault(); addMember(e.target.email.value.trim(), e.target.role.value); e.target.reset(); };
-  all("[data-rm]").forEach((b) => b.onclick = () => removeMember(b.dataset.rm));
-  const pw = $("#pw"); if (pw) pw.onsubmit = (e) => { e.preventDefault(); changePassword(e.target.pw.value); e.target.reset(); };
-  const so = $('[data-act="signout"]'); if (so) so.onclick = () => sb.auth.signOut();
-}
-
-function openTaskEditor(t) {
-  const d = document.getElementById("task-editor"), ro = canEdit() ? "" : "readonly", dis = canEdit() ? "" : "disabled";
-  d.innerHTML = `<form class="stack" method="dialog"><h2 style="margin:0">Εργασία</h2><input name="title" value="${esc(t.title)}" required ${ro}><textarea name="notes" placeholder="Σημειώσεις" ${ro}>${esc(t.notes||"")}</textarea>
-    <div class="two"><select name="status" ${dis}>${[["todo","προς εκτέλεση"],["doing","σε εξέλιξη"],["done","έγινε"],["dropped","ακυρώθηκε"]].map(([s,l])=>`<option value="${s}" ${t.status===s?"selected":""}>${l}</option>`).join("")}</select><select name="priority" ${dis}>${["καμία","χαμηλή","μεσαία","υψηλή"].map((p,i)=>`<option value="${i}" ${t.priority===i?"selected":""}>προτεραιότητα: ${p}</option>`).join("")}</select></div>
-    <input name="due_date" type="date" value="${t.due_date||""}" ${dis}>
-    <div class="actions"><button type="button" data-x="cancel">Άκυρο</button>${canEdit()?`<button class="primary">Αποθήκευση</button>`:""}${isOwner()?`<button type="button" class="danger" data-x="delete">Διαγραφή</button>`:""}</div></form>`;
-  const f = d.querySelector("form"); d.querySelector('[data-x="cancel"]').onclick = () => d.close();
-  const del = d.querySelector('[data-x="delete"]'); if (del) del.onclick = () => { d.close(); deleteTask(t); };
-  f.onsubmit = () => patchTask(t, { title:f.title.value.trim(), notes:f.notes.value, status:f.status.value, priority:Number(f.priority.value), due_date:f.due_date.value||null });
-  d.showModal();
-}
-
-// ---------------------------------------------------------------- boot (last, so every declaration above exists)
-try {
-  sb.auth.onAuthStateChange((_e, session) => { S.session = session; if (session) loadHome(); else render(); });
-  const { data: { session } } = await sb.auth.getSession();
-  S.session = session; if (session) await loadHome(); else render();
-} catch (e) {
-  $app.innerHTML = `<div class="signin"><h1>ΠΟΥΛΟΣ OS</h1><p class="muted">Σφάλμα εκκίνησης: ${esc(e?.message || e)}</p></div>`;
-}
-</script>
+  <a class="skip-link" href="#main-content">Μετάβαση στο περιεχόμενο</a>
+  <div id="auth-screen" class="auth-screen" hidden></div>
+  <div id="boot-screen" class="boot-screen"><div class="brand-mark">Π</div><p>Ανοίγει ο χώρος εργασίας σου…</p><span class="loading-line"></span></div>
+  <div id="workstation" class="workstation" hidden>
+    <aside class="sidebar" id="sidebar" aria-label="Πλοήγηση">
+      <a class="brand" href="./" aria-label="ΠΟΥΛΟΣ αρχική"><span class="brand-mark">Π</span><span>ΠΟΥΛΟΣ<span class="brand-sub">Workstation</span></span></a>
+      <button class="mobile-close icon-button" id="close-nav" aria-label="Κλείσιμο πλοήγησης"></button>
+      <nav class="main-nav" id="main-nav" aria-label="Κύρια πλοήγηση"></nav>
+      <div class="spaces-nav"><div class="sidebar-label">Οι χώροι μου</div><nav id="workspace-nav" aria-label="Χώροι εργασίας"></nav></div>
+      <div class="sidebar-bottom">
+        <a href="./workspace.html" class="sidebar-link" id="advanced-link"></a>
+        <div class="account"><div class="avatar" aria-hidden="true">Π</div><div class="account-text"><b>Ο λογαριασμός μου</b><span id="account-email"></span></div><button class="icon-button" id="logout" aria-label="Αποσύνδεση" title="Αποσύνδεση"></button></div>
+      </div>
+    </aside>
+    <button class="nav-overlay" id="nav-overlay" aria-label="Κλείσιμο πλοήγησης" hidden></button>
+    <div class="main-shell">
+      <header class="topbar">
+        <div class="breadcrumb"><button class="icon-button mobile-menu" id="open-nav" aria-label="Άνοιγμα πλοήγησης" aria-expanded="false" aria-controls="sidebar"></button><span class="breadcrumb-home">Ο χώρος μου</span><span class="breadcrumb-separator">/</span><span id="breadcrumb-view">Σήμερα</span></div>
+        <div class="topbar-actions"><label class="search-box"><span id="search-icon" aria-hidden="true"></span><input id="global-search" type="search" placeholder="Αναζήτηση στον χώρο μου" aria-label="Αναζήτηση εργασιών, εισερχομένων και εφαρμογών"><kbd>/</kbd></label><button class="icon-button" id="refresh" aria-label="Ανανέωση δεδομένων" title="Ανανέωση"></button></div>
+      </header>
+      <main id="main-content" tabindex="-1">
+        <div id="global-error" class="alert error" role="alert" hidden></div>
+        <div class="page-heading"><div><div id="today-date" class="today-date"></div><h1 id="view-title">Καλημέρα, Γιάννη.</h1><p id="view-description">Ο χώρος σου, σε μία εικόνα.</p></div><button class="button primary" id="new-task"></button></div>
+        <div id="scope-bar" class="scope-bar"></div>
+        <div id="status-strip" class="status-strip" aria-live="polite"></div>
+        <div id="view-content" aria-busy="true"></div>
+        <footer class="page-footer"><span>ΠΟΥΛΟΣ Workstation</span><span id="footer-status">Προσωπικοί και επαγγελματικοί χώροι, με ξεχωριστό πλαίσιο.</span></footer>
+      </main>
+    </div>
+  </div>
+  <dialog id="task-dialog" aria-labelledby="task-dialog-title"><div id="task-dialog-content"></div></dialog>
+  <dialog id="connection-dialog" aria-labelledby="connection-dialog-title"><div id="connection-dialog-content"></div></dialog>
+  <dialog id="handoff-dialog" class="wide-dialog" aria-labelledby="handoff-dialog-title"><div id="handoff-dialog-content"></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

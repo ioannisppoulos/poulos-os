@@ -1,0 +1,12 @@
+{
+  "name": "poulos-workstation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node --check app.js && node --check data.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
