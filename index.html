@@ -90,10 +90,6 @@ const canEdit = () => ["owner","editor"].includes(S.role);
 const isOwner = () => S.role === "owner";
 
 // ---------------------------------------------------------------- auth
-sb.auth.onAuthStateChange((_e, session) => { S.session = session; if (session) loadHome(); else render(); });
-const { data: { session } } = await sb.auth.getSession();
-S.session = session; if (session) await loadHome(); else render();
-
 async function signIn(email, password) {
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) return fail(error);
@@ -132,7 +128,7 @@ async function openWorkspace(ws) {
   render();
 }
 function goHome() { S.view = "home"; remember("view", "home"); if (S.channel) { sb.removeChannel(S.channel); S.channel = null; } document.documentElement.style.setProperty("--band", "var(--kind-business)"); loadHome(); }
-const q = (table, sel="*") => sb.from(table).select(sel).eq("workspace_id", S.ws.id);
+function q(table, sel="*") { return sb.from(table).select(sel).eq("workspace_id", S.ws.id); }
 async function loadTasks() { const { data, error } = await q("tasks").order("status").order("priority",{ascending:false}).order("updated_at",{ascending:false}).limit(300); if (error) return fail(error); S.tasks = data; render(); }
 async function loadMemory() { const { data, error } = await q("memory_effective").order("updated_at",{ascending:false}).limit(300); if (error) return fail(error); S.memory = data; render(); }
 async function loadSkills() { const { data, error } = await q("skills").order("status").order("updated_at",{ascending:false}); if (error) return fail(error); S.skills = data; render(); }
@@ -193,7 +189,7 @@ function render() {
     <dialog id="task-editor"></dialog>`;
   wire();
 }
-const notice = () => S.notice ? `<div class="notice ${S.notice.kind==="error"?"error":""}">${esc(S.notice.text)}</div>` : "";
+function notice() { return S.notice ? `<div class="notice ${S.notice.kind==="error"?"error":""}">${esc(S.notice.text)}</div>` : ""; }
 
 function renderSignIn() {
   $app.innerHTML = `<div class="signin"><h1>ΠΟΥΛΟΣ OS</h1><p class="muted">Ιδιωτικό. Σύνδεση με email και κωδικό.</p>${notice()}
@@ -314,6 +310,15 @@ function openTaskEditor(t) {
   const del = d.querySelector('[data-x="delete"]'); if (del) del.onclick = () => { d.close(); deleteTask(t); };
   f.onsubmit = () => patchTask(t, { title:f.title.value.trim(), notes:f.notes.value, status:f.status.value, priority:Number(f.priority.value), due_date:f.due_date.value||null });
   d.showModal();
+}
+
+// ---------------------------------------------------------------- boot (last, so every declaration above exists)
+try {
+  sb.auth.onAuthStateChange((_e, session) => { S.session = session; if (session) loadHome(); else render(); });
+  const { data: { session } } = await sb.auth.getSession();
+  S.session = session; if (session) await loadHome(); else render();
+} catch (e) {
+  $app.innerHTML = `<div class="signin"><h1>ΠΟΥΛΟΣ OS</h1><p class="muted">Σφάλμα εκκίνησης: ${esc(e?.message || e)}</p></div>`;
 }
 </script>
 </body>
