@@ -34,20 +34,39 @@ async function readAll(table, order, ascending=false, filter=null) {
     if(rows.length>=20000) throw new Error('Πάρα πολλές εγγραφές για μία προβολή. Άνοιξε τον επιμέρους χώρο.');
   }
 }
-export async function loadDashboard() {
+async function readWindow(table,order,configure) {
+  const rows=[];
+  for(let from=0;from<20000;from+=1000) {
+    const page=unwrap(await configure(sb.from(table).select('*')).order(order,{ascending:false}).order('id').range(from,from+999));
+    rows.push(...page);if(page.length<1000)return rows;
+  }
+  throw new Error('Το επιλεγμένο διάστημα έχει πάνω από 20.000 εγγραφές. Χρειάζεται μικρότερο εύρος.');
+}
+export async function loadDashboard(selectedDay) {
+  const day=/^\d{4}-\d{2}-\d{2}$/.test(selectedDay||'')?selectedDay:new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Athens',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  // One-day padding includes Athens midnight; views apply the exact local date.
+  const monthStart=new Date(day.slice(0,7)+'-01T00:00:00Z');
+  const windowStart=new Date(monthStart.getTime()-86400000).toISOString();
+  const windowEnd=new Date(Date.UTC(monthStart.getUTCFullYear(),monthStart.getUTCMonth()+1,2)).toISOString();
   const generation=authGeneration;
-  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics] = await Promise.all([
+  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts] = await Promise.all([
     readAll('workspace_overview','name',true),
     readAll('tasks','updated_at'),
-    sb.from('tool_feed').select('*').order('occurred_at',{ascending:false}).limit(500).then(unwrap),
-    sb.from('log_events').select('*').order('at',{ascending:false}).limit(80).then(unwrap),
+    Promise.all([
+      sb.from('tool_feed').select('*').order('occurred_at',{ascending:false}).limit(500).then(unwrap),
+      readWindow('tool_feed','occurred_at',q=>q.gte('occurred_at',windowStart).lt('occurred_at',windowEnd))
+    ]).then(pages=>[...new Map(pages.flat().map(e=>[e.id,e])).values()]),
+    readWindow('log_events','at',q=>q.eq('day',day)),
     sb.from('job_runs').select('*').order('started_at',{ascending:false}).limit(30).then(unwrap),
     readAll('workstation_connections','label',true),
     readAll('log_events','at',false,{workstation_capture:true}),
-    sb.from('log_events').select('*').contains('refs',{workstation_metrics:true}).order('at',{ascending:false}).limit(300).then(unwrap)
+    sb.from('log_events').select('*').contains('refs',{workstation_metrics:true}).order('at',{ascending:false}).limit(300).then(unwrap),
+    readAll('workstation_suggestions','created_at'),
+    readAll('workstation_requests','requested_at'),
+    readAll('workstation_accounts','bank',true)
   ]);
   if (generation!==authGeneration) throw new Error('Η συνεδρία άλλαξε. Συνδέσου ξανά.');
-  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,loadedAt:new Date().toISOString()};
+  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,loadedAt:new Date().toISOString()};
   return currentData;
 }
 const taskFields=['title','notes','status','priority','due_date','assignee'];
@@ -63,7 +82,9 @@ function taskPatch(input) {
   return patch;
 }
 export async function createTask(input) {
-  return unwrap(await sb.from('tasks').insert({workspace_id:input.workspace_id,...taskPatch(input),via:'app'}).select().single());
+  const ws=currentData?.workspaces.find(w=>w.id===input.workspace_id);
+  if(!ws || (input.area && ws.kind!=='personal')) throw new Error('Έλεγξε τον χώρο της εργασίας.');
+  return unwrap(await sb.from('tasks').insert({workspace_id:input.workspace_id,area:input.area||null,...taskPatch(input),via:'app'}).select().single());
 }
 export async function updateTask(task, input) {
   const result=await sb.rpc('update_task',{p_id:task.id,p_expected_version:task.version,p_patch:taskPatch(input)});
@@ -105,12 +126,19 @@ export function subscribe(callback) {
   let pending;
   const update=()=>{clearTimeout(pending);pending=setTimeout(()=>{if(!document.hidden)callback();},350);};
   const channel=sb.channel('workstation-'+crypto.randomUUID());
-  for(const table of ['tasks','ingestion_events','log_events']) channel.on('postgres_changes',{event:'*',schema:'public',table},update);
+  for(const table of ['tasks','ingestion_events','log_events','workstation_suggestions','workstation_requests','workstation_accounts','workstation_connections']) channel.on('postgres_changes',{event:'*',schema:'public',table},update);
   channel.subscribe();
   const timer=setInterval(update,60000);
   const visible=()=>{if(!document.hidden)update();};
   document.addEventListener('visibilitychange',visible);
   return ()=>{clearInterval(timer);clearTimeout(pending);document.removeEventListener('visibilitychange',visible);sb.removeChannel(channel);};
+}
+
+export async function decideSuggestion(id,accept) {
+  return unwrap(await sb.rpc('decide_workstation_suggestion',{p_id:id,p_accept:accept}));
+}
+export async function requestAction({id,workspace_id,kind,task_id,start_at,end_at}) {
+  return unwrap(await sb.rpc('request_workstation_action',{p_id:id,p_workspace:workspace_id,p_kind:kind,p_task:task_id||null,p_start:start_at||null,p_end:end_at||null}));
 }
 
 export async function createCapture(input) {

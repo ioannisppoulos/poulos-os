@@ -1,0 +1,18 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync('app.js','utf8').replace(/boot\(\);\s*$/,'');
+const c=vm.createContext({URL,URLSearchParams,Intl,Date,console,window:{location:{search:''}},document:{querySelector(){return null}}});vm.runInContext(src,c);
+const run=s=>vm.runInContext(s,c);
+assert.equal(run("athensDay(new Date('2026-09-07T22:30:00Z'))"),'2026-09-08');
+assert.equal(run("athensInputToISO('2026-09-08T16:00')"),'2026-09-08T13:00:00.000Z');
+assert.equal(run("athensInputToISO('2026-12-08T16:00')"),'2026-12-08T14:00:00.000Z');
+assert.throws(()=>run("athensInputToISO('2026-03-29T03:30')"));
+run(`state.data.workspaces=[{id:'a',name:'Project',kind:'project'},{id:'b',name:'Personal',kind:'personal'}];state.scope='a';state.selectedDay='2026-09-08';state.data.suggestions=[{id:'1',workspace_id:'a',title:'<img src=x>',reason:'Review',status:'pending'},{id:'2',workspace_id:'b',title:'PRIVATE',reason:'SECRET',status:'pending'}];`);
+let h=run('renderSuggestions()');assert(!h.includes('PRIVATE'));assert(h.includes('&lt;img'));assert(h.includes('Αποδοχή ως εργασία'));
+run(`state.data.events=[{id:'e',workspace_id:'a',title:'Received mail',provider:'gmail',occurred_at:'2026-09-08T10:00:00Z',category:'expense',currency:'EUR',amount:10,status:'new'},{id:'t',workspace_id:'a',title:'Own transfer',occurred_at:'2026-09-08T11:00:00Z',category:'income',currency:'EUR',amount:900,meta:{internal_transfer:true}},{id:'i',workspace_id:'a',title:'USD income',occurred_at:'2026-09-08T11:00:00Z',category:'income',currency:'USD',amount:200},{id:'b',workspace_id:'b',title:'PRIVATE BANK',occurred_at:'2026-09-08T11:00:00Z',category:'income',currency:'EUR',amount:400}];state.data.logs=[];state.data.tasks=[{id:'old',workspace_id:'a',title:'OLD DONE',status:'done',completed_at:'2026-09-07T10:00:00Z'},{id:'new',workspace_id:'a',title:'TODAY DONE',status:'done',completed_at:'2026-09-08T10:00:00Z'}];`);
+assert.equal(run("financeTotals(scoped(state.data.events),'expense','2026-09-08').amount"),10);
+assert.equal(run("financeTotals(scoped(state.data.events),'income','2026-09').count"),0);
+h=run('renderFinance()');assert(!h.includes('PRIVATE BANK'));assert(h.includes('αναμονή τροφοδότησης'));assert(!h.includes('400,00'));
+h=run('renderTimeline()');assert(!h.includes('PRIVATE'));assert(!h.includes('OLD DONE'));assert(h.includes('TODAY DONE'));
+run(`state.data.logs=[{id:'l',workspace_id:'a',day:'2026-09-08',at:'2026-09-08T10:00:00Z',kind:'task',text:'Audit done',refs:{task_id:'new'}}];`);
+assert.equal(run("dailyTimelineRows().filter(r=>r.task_id==='new').length"),1);
+console.log('PASS: Athens dates/DST, workspace isolation, escaped suggestions, completion day, audit dedup, currencies and internal transfers.');
