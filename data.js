@@ -49,7 +49,7 @@ export async function loadDashboard(selectedDay) {
   const windowStart=new Date(monthStart.getTime()-86400000).toISOString();
   const windowEnd=new Date(Date.UTC(monthStart.getUTCFullYear(),monthStart.getUTCMonth()+1,2)).toISOString();
   const generation=authGeneration;
-  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts] = await Promise.all([
+  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats] = await Promise.all([
     readAll('workspace_overview','name',true),
     readAll('tasks','updated_at'),
     Promise.all([
@@ -63,10 +63,11 @@ export async function loadDashboard(selectedDay) {
     sb.from('log_events').select('*').contains('refs',{workstation_metrics:true}).order('at',{ascending:false}).limit(300).then(unwrap),
     readAll('workstation_suggestions','created_at'),
     readAll('workstation_requests','requested_at'),
-    readAll('workstation_accounts','bank',true)
+    readAll('workstation_accounts','bank',true),
+    readAll('workstation_chats','last_activity_at')
   ]);
   if (generation!==authGeneration) throw new Error('Η συνεδρία άλλαξε. Συνδέσου ξανά.');
-  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,loadedAt:new Date().toISOString()};
+  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats,loadedAt:new Date().toISOString()};
   return currentData;
 }
 const taskFields=['title','notes','status','priority','due_date','assignee'];
@@ -122,11 +123,17 @@ export function getHandoff(task) {
     'Dashboard: https://ioannisppoulos.github.io/poulos-os/'
   ].filter(Boolean).join('\n');
 }
+export async function loadConversation(chat) {
+  const generation=authGeneration;
+  const rows=unwrap(await sb.from('tool_feed').select('*').eq('workspace_id',chat.workspace_id).eq('provider',chat.provider).contains('meta',{source_account:chat.account_id,source_thread_id:chat.source_chat_id}).order('occurred_at',{ascending:false}).order('id').limit(250));
+  if(generation!==authGeneration)throw new Error('Η συνεδρία άλλαξε.');
+  return rows;
+}
 export function subscribe(callback) {
   let pending;
-  const update=()=>{clearTimeout(pending);pending=setTimeout(()=>{if(!document.hidden)callback();},350);};
+  const update=()=>{clearTimeout(pending);pending=setTimeout(callback,350);};
   const channel=sb.channel('workstation-'+crypto.randomUUID());
-  for(const table of ['tasks','ingestion_events','log_events','workstation_suggestions','workstation_requests','workstation_accounts','workstation_connections']) channel.on('postgres_changes',{event:'*',schema:'public',table},update);
+  for(const table of ['tasks','ingestion_events','log_events','workstation_suggestions','workstation_requests','workstation_accounts','workstation_connections','workstation_chats']) channel.on('postgres_changes',{event:'*',schema:'public',table},update);
   channel.subscribe();
   const timer=setInterval(update,60000);
   const visible=()=>{if(!document.hidden)update();};
