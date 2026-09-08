@@ -262,12 +262,13 @@ function conversationDirectory(){
 function conversationMessages(chat){
   return [...new Map([...state.data.events,...state.chatMessages].filter(e=>chatKey(e)===chatKey(chat)).map(e=>[e.id,e])).values()].sort((a,b)=>String(a.occurred_at).localeCompare(String(b.occurred_at)));
 }
-function sendStatusLabel(status){return ({queued:'Σε αναμονή αποστολής',sending:'Αποστολή…',submitted:'Αναμονή επιβεβαίωσης από την εφαρμογή…',sent:'Στάλθηκε',failed:'Δεν στάλθηκε',uncertain:'Χρειάζεται έλεγχος στο Beeper',expired:'Δεν στάλθηκε · έληξε η αναμονή',cancelled:'Ακυρώθηκε'})[status]||status;}
+function sendStatusLabel(status){return ({queued:'Σε αναμονή αποστολής',sending:'Αποστολή…',submitted:'Αναμονή επιβεβαίωσης από την εφαρμογή…',sent:'Στάλθηκε',recorded:'Στο Beeper · χωρίς επιβεβαίωση παράδοσης',failed:'Δεν στάλθηκε',uncertain:'Χρειάζεται έλεγχος στο Beeper',expired:'Δεν στάλθηκε · έληξε η αναμονή',cancelled:'Ακυρώθηκε'})[status]||status;}
 function conversationDisplayMessages(chat){
-  const messages=conversationMessages(chat);
+  const messages=conversationMessages(chat).map(e=>({...e}));
   const outgoing=(state.data.outbox||[]).filter(m=>m.chat_id===chat.id&&m.workspace_id===chat.workspace_id);
   for(const m of outgoing){
-    if(m.message_id&&messages.some(e=>e.meta?.direction==='sent'&&String(e.meta?.source_message_id)===String(m.message_id)))continue;
+    const existing=m.message_id&&messages.find(e=>e.meta?.direction==='sent'&&String(e.meta?.source_message_id)===String(m.message_id));
+    if(existing){existing.outboxStatus=m.status;existing.sendError=m.error;continue;}
     messages.push({id:'outbox-'+m.id,summary:m.text,occurred_at:m.requested_at,meta:{direction:'sent'},outboxStatus:m.status,sendError:m.error});
   }
   return messages.sort((a,b)=>String(a.occurred_at).localeCompare(String(b.occurred_at)));

@@ -6,10 +6,29 @@ import {pathToFileURL} from 'node:url';
 import config from '../config.js';
 const dir=join(homedir(),'.local','share','poulos-workstation');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
-export function classifyReceipt(message){
+export function classifyReceipt(message,pendingID){
   if(message?.sendStatus?.status==='SUCCESS')return 'sent';
   if(['FAIL_RETRIABLE','FAIL_PERMANENT'].includes(message?.sendStatus?.status))return 'failed';
+  if(!message?.sendStatus&&message?.isSender&&message.id&&pendingID&&message.id!==pendingID&&!message.id.startsWith('~'))return 'recorded';
   return 'submitted';
+}
+export async function resolveReceipt(row,{getChat,getMessage,listMessages}){
+  const chat=await getChat(row.source_chat_id);
+  if(chat.accountID!==row.account_id)return null;
+  const normalized=text=>String(text??'').replaceAll('\r\n','\n').trim();
+  const matches=m=>m.accountID===row.account_id&&m.chatID===chat.id&&m.isSender===true&&!m.isDeleted&&!m.isHidden&&normalized(m.text)===normalized(row.text)&&Date.parse(m.timestamp)>=Date.parse(row.requested_at)-1000&&Date.parse(m.timestamp)<=Date.parse(row.requested_at)+30000;
+  try{const message=await getMessage(chat.id,row.message_id);if(matches(message))return message;}catch{}
+  // Some bridges retire pending IDs. Read bounded history; never repeat the send.
+  const found=new Map();let cursor;
+  for(let page=0;page<5;page++){
+    const result=await listMessages(chat.id,cursor);
+    for(const m of result.items||[])if(matches(m))found.set(m.id,m);
+    const oldest=result.items?.at(-1)?.timestamp;
+    if(!result.hasMore||(oldest&&Date.parse(oldest)<Date.parse(row.requested_at)-1000))return found.size===1?[...found.values()][0]:null;
+    if(!result.oldestCursor||result.oldestCursor===cursor)return null;
+    cursor=result.oldestCursor;
+  }
+  return null;
 }
 export async function dispatch(row,{getChat,send,finish}){
   // The database has already atomically claimed this exact owner-written payload.
@@ -63,9 +82,12 @@ async function main(){
       });
       for(const row of data?.awaiting||[]){
         try{
-          const message=await beeper('/v1/chats/'+encodeURIComponent(row.source_chat_id)+'/messages/'+encodeURIComponent(row.message_id));
-          if(message.accountID!==row.account_id)continue;
-          const status=classifyReceipt(message);
+          const message=await resolveReceipt(row,{
+            getChat:id=>beeper('/v1/chats/'+encodeURIComponent(id)),
+            getMessage:(id,mid)=>beeper('/v1/chats/'+encodeURIComponent(id)+'/messages/'+encodeURIComponent(mid)),
+            listMessages:(id,cursor)=>beeper('/v1/chats/'+encodeURIComponent(id)+'/messages'+(cursor?'?direction=before&cursor='+encodeURIComponent(cursor):''))
+          });
+          const status=classifyReceipt(message,row.message_id);
           if(status!=='submitted')await finish(row.id,status,message.id||row.message_id,status==='failed'?'Η εφαρμογή ανέφερε αποτυχία αποστολής.':null);
           else if(Date.now()-Date.parse(row.updated_at)>300000)await finish(row.id,'uncertain',row.message_id,'Δεν ήρθε επιβεβαίωση από το δίκτυο. Έλεγξε το Beeper.');
         }catch{if(Date.now()-Date.parse(row.updated_at)>300000)await finish(row.id,'uncertain',row.message_id,'Δεν ήταν δυνατός ο έλεγχος επιβεβαίωσης. Έλεγξε το Beeper.');}

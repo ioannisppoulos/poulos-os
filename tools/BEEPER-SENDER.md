@@ -16,4 +16,6 @@ Credentials and sanitized operational logs are local under `~/.local/share/poulo
 
 The browser cannot write outbox rows directly or impersonate a worker. Members may read their workspace; only its owner can queue. A worker credential can only claim/finish that workspace's already authorized messages. Terminal requests are never replayed. An ambiguous timeout is shown as requiring review in Beeper. Queued requests expire after two minutes. Accepted requests display as waiting until the provider reports SUCCESS; this is not a read receipt.
 
+Beeper's optional `sendStatus` may be absent and its pending ID may retire. An exact own-message match in the same account/chat within the send window is then recorded as `recorded` (visible in Beeper, delivery unconfirmed), never as network-confirmed `sent`. The fallback reads up to five history pages and refuses ambiguous matches. A stable message ID also deduplicates the outbox bubble after inbound import. Reference: https://developers.beeper.com/desktop-api-reference/resources/messages/methods/retrieve/
+
 Verification: `node tests/beeper-sender.mjs`, `node tests/outbox-ui.cjs`, existing communication tests, and rollback-only `tests/outbox-transaction.sql` with an idle outbox. These tests do not send messages to real contacts. The latter uses an isolated transaction, a temporary test credential, and always rolls back.
