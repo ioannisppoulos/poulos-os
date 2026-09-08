@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const src=fs.readFileSync('app.js','utf8').replace(/boot\(\);\s*$/,'');
-const c=vm.createContext({URL,URLSearchParams,Intl,Date,console,window:{location:{search:''}},document:{querySelector(){return null}}});
+const c=vm.createContext({URL,URLSearchParams,Intl,Date,console,clearInterval,window:{location:{search:''}},document:{querySelector(){return null}}});
 vm.runInContext(src,c);const run=s=>vm.runInContext(s,c);
 for(const label of ['CATEGORY_SOCIAL','CATEGORY_PROMOTIONS','SPAM','TRASH']){
   assert.equal(run(`visibleEmail({meta:{gmail_labels:['IMPORTANT','${label}']}})`),false);

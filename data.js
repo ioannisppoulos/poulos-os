@@ -49,7 +49,7 @@ export async function loadDashboard(selectedDay) {
   const windowStart=new Date(monthStart.getTime()-86400000).toISOString();
   const windowEnd=new Date(Date.UTC(monthStart.getUTCFullYear(),monthStart.getUTCMonth()+1,2)).toISOString();
   const generation=authGeneration;
-  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats] = await Promise.all([
+  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats,sending] = await Promise.all([
     readAll('workspace_overview','name',true),
     readAll('tasks','updated_at'),
     Promise.all([
@@ -64,10 +64,11 @@ export async function loadDashboard(selectedDay) {
     readAll('workstation_suggestions','created_at'),
     readAll('workstation_requests','requested_at'),
     readAll('workstation_accounts','bank',true),
-    readAll('workstation_chats','last_activity_at')
+    readAll('workstation_chats','last_activity_at'),
+    loadSendingState()
   ]);
   if (generation!==authGeneration) throw new Error('Η συνεδρία άλλαξε. Συνδέσου ξανά.');
-  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats,loadedAt:new Date().toISOString()};
+  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,suggestions,requests,accounts,chats,...sending,loadedAt:new Date().toISOString()};
   return currentData;
 }
 const taskFields=['title','notes','status','priority','due_date','assignee'];
@@ -128,6 +129,18 @@ export async function loadConversation(chat) {
   const rows=unwrap(await sb.from('tool_feed').select('*').eq('workspace_id',chat.workspace_id).eq('provider',chat.provider).contains('meta',{source_account:chat.account_id,source_thread_id:chat.source_chat_id}).order('occurred_at',{ascending:false}).order('id').limit(250));
   if(generation!==authGeneration)throw new Error('Η συνεδρία άλλαξε.');
   return rows;
+}
+export async function loadSendingState() {
+  const generation=authGeneration;
+  const [outbox,bridges]=await Promise.all([
+    sb.from('workstation_outbox').select('*').order('requested_at',{ascending:false}).limit(500).then(unwrap),
+    sb.from('workstation_bridges').select('*').then(unwrap)
+  ]);
+  if(generation!==authGeneration)throw new Error('Η συνεδρία άλλαξε.');
+  return {outbox,bridges};
+}
+export async function queueMessage(request) {
+  return unwrap(await sb.rpc('queue_workstation_message',{p_id:request.id,p_chat:request.chat_id,p_text:request.text}));
 }
 export function subscribe(callback) {
   let pending;

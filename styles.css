@@ -47,5 +47,13 @@
 .chat-author{font-size:11px;font-weight:600;color:#42628d}
 .chat-bubble time{font-size:10px;color:#69758b;display:block;text-align:right}
 .chat-reply-note{padding:18px 24px;border-top:1px solid #e5eaf2;font-size:12px;line-height:1.6;color:#66738a;background:white}
+.chat-composer{padding:18px 24px;border-top:1px solid #e5eaf2;background:white;display:grid;gap:10px}
+.chat-composer label{font-size:12px;font-weight:650;color:#344563}
+.chat-composer textarea{width:100%;resize:vertical;min-height:82px;max-height:240px;border:1px solid #ced8e6;border-radius:10px;padding:12px;font:inherit;font-size:14px;line-height:1.5;box-sizing:border-box}
+.chat-composer textarea:focus{outline:2px solid #557edb;outline-offset:2px}
+.chat-composer-footer{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.chat-composer-footer span,.chat-composer small{font-size:11px;line-height:1.5;color:#66738a}
+.chat-composer-footer button{white-space:nowrap;flex-shrink:0}
+.send-status{display:block;font-size:11px;line-height:1.5;color:#475a7c;margin-top:8px;text-align:right}
 .chat-unread-filter{display:flex;align-items:center;gap:8px;font-size:13px}
 @media(max-width:850px){.chat-workspace{grid-template-columns:1fr}.chat-list{max-height:300px;border-right:0;border-bottom:1px solid #e5eaf2}.chat-thread{min-height:360px}.communication-status{align-items:flex-start;flex-direction:column;gap:5px}.chat-messages{padding:14px}.chat-bubble{max-width:94%}}

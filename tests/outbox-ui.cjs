@@ -1,0 +1,24 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),{randomUUID}=require('crypto');
+const c=vm.createContext({URL,URLSearchParams,Intl,Date,console,clearInterval,crypto:{randomUUID},window:{location:{search:''}},document:{querySelector(){return null},hidden:false}});
+vm.runInContext(fs.readFileSync('app.js','utf8').replace(/boot\(\);\s*$/,''),c);const run=s=>vm.runInContext(s,c);
+run(`state.session={user:{id:'owner'}};state.data.chats=[{id:'chat',workspace_id:'personal',provider:'instagram',title:'Contact <tag>'}];state.data.bridges=[{workspace_id:'personal',connected:true,last_seen_at:new Date().toISOString()}];state.chatDrafts.set('chat','Text <script>');render=()=>{};toast=()=>{};pollSendingState=async()=>{};`);
+assert(run("renderChatComposer(state.data.chats[0])").includes('Contact &lt;tag&gt;'));
+assert(run("renderChatComposer(state.data.chats[0])").includes('Text &lt;script&gt;'));
+(async()=>{
+  run(`globalThis.calls=[];api={queueMessage:async r=>{calls.push({...r});throw Error('network lost');}};`);
+  await run("submitChatMessage('chat')");
+  assert.equal(run('state.chatRequests.size'),1);assert.equal(run('state.chatDrafts.size'),1);
+  assert(run("renderChatComposer(state.data.chats[0])").includes(' readonly'));
+  run('api.queueMessage=async r=>{calls.push({...r});return r.id;}');
+  await run("submitChatMessage('chat')");
+  assert.equal(run('calls[0].id===calls[1].id&&calls[0].text===calls[1].text'),true);
+  assert.equal(run('state.chatRequests.size'),0);assert.equal(run('state.chatDrafts.size'),0);
+  assert.equal(run('state.data.outbox[0].status'),'queued');
+  run(`state.chatDrafts.set('chat','another');api.queueMessage=async()=>{throw {code:'42501',message:'Owner required'};};`);
+  await run("submitChatMessage('chat')");
+  assert.equal(run('state.chatRequests.size'),0);assert.equal(run("state.chatDrafts.get('chat')"),'another');
+  run("state.data.bridges[0].last_seen_at='2020-01-01';globalThis.offlineCalls=0;api.queueMessage=async()=>offlineCalls++;");
+  await run("submitChatMessage('chat')");assert.equal(run('offlineCalls'),0);
+  run('resetCommunications()');assert.equal(run('state.chatDrafts.size'),0);
+  console.log('PASS: escaped composer, offline draft, immutable retry identity, SQL rejection, session cleanup.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
