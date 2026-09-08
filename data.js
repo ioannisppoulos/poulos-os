@@ -23,10 +23,12 @@ export async function signOut() {
   unwrap(await sb.auth.signOut());
   authGeneration++; currentData = null;
 }
-async function readAll(table, order, ascending=false) {
+async function readAll(table, order, ascending=false, filter=null) {
   const rows=[];
   for (let from=0; ; from+=1000) {
-    const page=unwrap(await sb.from(table).select('*').order(order,{ascending}).order('id').range(from,from+999));
+    let query=sb.from(table).select('*').order(order,{ascending}).order('id');
+    if(filter) query=query.contains('refs',filter);
+    const page=unwrap(await query.range(from,from+999));
     rows.push(...page);
     if(page.length<1000) return rows;
     if(rows.length>=20000) throw new Error('Πάρα πολλές εγγραφές για μία προβολή. Άνοιξε τον επιμέρους χώρο.');
@@ -34,16 +36,18 @@ async function readAll(table, order, ascending=false) {
 }
 export async function loadDashboard() {
   const generation=authGeneration;
-  const [workspaces,tasks,events,logs,jobs,connections] = await Promise.all([
+  const [workspaces,tasks,events,logs,jobs,connections,captures,metrics] = await Promise.all([
     readAll('workspace_overview','name',true),
     readAll('tasks','updated_at'),
     sb.from('tool_feed').select('*').order('occurred_at',{ascending:false}).limit(500).then(unwrap),
     sb.from('log_events').select('*').order('at',{ascending:false}).limit(80).then(unwrap),
     sb.from('job_runs').select('*').order('started_at',{ascending:false}).limit(30).then(unwrap),
-    readAll('workstation_connections','label',true)
+    readAll('workstation_connections','label',true),
+    readAll('log_events','at',false,{workstation_capture:true}),
+    sb.from('log_events').select('*').contains('refs',{workstation_metrics:true}).order('at',{ascending:false}).limit(300).then(unwrap)
   ]);
   if (generation!==authGeneration) throw new Error('Η συνεδρία άλλαξε. Συνδέσου ξανά.');
-  currentData={workspaces,tasks,events,logs,jobs,connections,loadedAt:new Date().toISOString()};
+  currentData={workspaces,tasks,events,logs,jobs,connections,captures,metrics,loadedAt:new Date().toISOString()};
   return currentData;
 }
 const taskFields=['title','notes','status','priority','due_date','assignee'];
@@ -107,4 +111,18 @@ export function subscribe(callback) {
   const visible=()=>{if(!document.hidden)update();};
   document.addEventListener('visibilitychange',visible);
   return ()=>{clearInterval(timer);clearTimeout(pending);document.removeEventListener('visibilitychange',visible);sb.removeChannel(channel);};
+}
+
+export async function createCapture(input) {
+  const title=String(input.title||'').trim(), text=String(input.text||'').trim();
+  if(!title||title.length>200) throw new Error('Ο τίτλος χρειάζεται 1–200 χαρακτήρες.');
+  if(!text||text.length>4000) throw new Error('Η καταγραφή χρειάζεται 1–4.000 χαρακτήρες.');
+  const kinds=['note','call','meeting','decision'];
+  if(!kinds.includes(input.capture_kind)) throw new Error('Μη έγκυρος τύπος καταγραφής.');
+  const ws=currentData?.workspaces.find(w=>w.id===input.workspace_id);
+  if(!ws) throw new Error('Διάλεξε έναν διαθέσιμο χώρο.');
+  const areas=['Υγεία','Σχέσεις','Καριέρα','Οικονομικά','Σπίτι','Μάθηση'];
+  if(input.area && (ws.kind!=='personal'||!areas.includes(input.area))) throw new Error('Οι προσωπικές περιοχές ανήκουν στον προσωπικό χώρο.');
+  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Athens',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  return unwrap(await sb.from('log_events').insert({workspace_id:ws.id,day,actor:'user',kind:input.capture_kind==='decision'?'decision':'note',text,area:input.area||null,via:'app',refs:{workstation_capture:true,title,capture_kind:input.capture_kind}}).select().single());
 }

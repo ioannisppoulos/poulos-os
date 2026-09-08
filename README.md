@@ -11,6 +11,9 @@ The public repository contains the application code only. Workspace records are 
 - Assignment to the owner, Codex or Claude and a scoped handoff packet.
 - App registration with separate agent-access and dashboard-sync status.
 - Activity, recent job results and last refresh time.
+- Append-only notes, call/meeting summaries and decisions, scoped to a workspace; optional personal area.
+- Turn a note into a dated task using “Επόμενη κίνηση”. This is a task deadline, not an iOS push notification.
+- Production snapshots and latest report metadata, read from private log_events records with source timestamps.
 - Existing memory, skills and workspace tools under `workspace.html`.
 
 Agent handoff copies context and opens the chosen service; it does not start an agent automatically. A connected Codex/Claude tool is not a web-app OAuth connection. External app connectors require their own approved authorization and sync adapter. No OAuth secrets belong in this repository or connection metadata.

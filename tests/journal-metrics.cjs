@@ -1,0 +1,8 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const src=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8').replace(/boot\(\);\s*$/,'');
+const ctx=vm.createContext({URL,URLSearchParams,Intl,Date,console,window:{location:{search:''}},document:{querySelector(){return null}}});vm.runInContext(src,ctx);
+vm.runInContext(`state.data.workspaces=[{id:'a',name:'Business',kind:'business'},{id:'b',name:'Personal',kind:'personal'}];state.data.captures=[{id:'1',workspace_id:'a',at:new Date().toISOString(),text:'<img src=x onerror=evil()>',refs:{title:'<script>evil()</script>',capture_kind:'note'}},{id:'2',workspace_id:'b',at:new Date().toISOString(),text:'PRIVATE_SECRET',refs:{title:'Private',capture_kind:'note'}}];state.scope='a';`,ctx);
+let html=vm.runInContext('renderJournal()',ctx);assert(!html.includes('PRIVATE_SECRET'));assert(!html.includes('<script>evil'));assert(html.includes('&lt;script&gt;'));assert(html.includes('&lt;img'));
+vm.runInContext(`state.data.metrics=[{workspace_id:'a',at:'2026-09-08T10:00:00Z',text:'Latest',refs:{scope:'x',created_today:0,pending_now:2,routed_today:null,url:'javascript:evil()'}},{workspace_id:'a',at:'2026-09-08T09:00:00Z',text:'OLD_METRIC',refs:{scope:'x',created_today:999}},{workspace_id:'b',at:'2026-09-08T10:00:00Z',text:'PRIVATE_METRIC',refs:{scope:'x'}}];`,ctx);
+html=vm.runInContext('renderProduction()',ctx);assert(html.includes('<strong>0</strong>'));assert(html.includes('<strong>—</strong>'));assert(!html.includes('OLD_METRIC'));assert(!html.includes('PRIVATE_METRIC'));assert(!html.includes('href="javascript:'));
+console.log('PASS: workspace isolation, escaping, latest snapshot, zero versus unknown, safe source URLs');
