@@ -51,7 +51,7 @@ const parseDate = value => value ? new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? 
 const validDate = value => { const date = parseDate(value); return date && !Number.isNaN(date.getTime()) ? date : null; };
 const fmtDate = (value, options = {day:'numeric',month:'short'}) => { const date=validDate(value); return date ? date.toLocaleDateString('el-GR',options) : '—'; };
 const fmtTime = value => { const date=validDate(value); return date ? date.toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'}) : '—'; };
-const fmtDateTime = value => { const date=validDate(value); return date ? date.toLocaleString('el-GR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Δεν έχει καταγραφεί'; };
+const fmtDateTime = value => { const date=validDate(value); return date ? date.toLocaleString('el-GR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Athens'}) : 'Δεν έχει καταγραφεί'; };
 const localDay = value => { const date=validDate(value); return date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` : ''; };
 const activeTask = task => !['done','dropped'].includes(task.status);
 const workspace = id => state.data.workspaces.find(ws => ws.id === id);
